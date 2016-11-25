@@ -2,6 +2,8 @@
 #include "global.h"
 
 extern struct mosaic mosaic;
+extern const off_t imageSize;
+extern const unsigned char imageBytes[];
 
 static int get_tile_name(long int ntile, char * name) {
 
@@ -44,7 +46,7 @@ static int open_tile_read(const off_t tile_num) {
 
     // Tile full path name
     get_tile_name(tile_num, tile_name);
-    snprintf(fpath, sizeof(fpath), "%s/%s", mosaic.dir, tile_name);
+    snprintf(fpath, sizeof(fpath), "%s/%s.jpg", mosaic.dir, tile_name);
 
     // Open new file
     fd = open(fpath,O_RDONLY);
@@ -77,7 +79,7 @@ static int open_tile_write(const off_t tile_num) {
 
     // Tile full path name
     get_tile_name(tile_num, tile_name);
-    snprintf(fpath, sizeof(fpath), "%s/%s", mosaic.dir, tile_name);
+    snprintf(fpath, sizeof(fpath), "%s/%s.jpg", mosaic.dir, tile_name);
 
     // Create sub-directory if necessary
     dir_name = strdup(fpath);
@@ -100,7 +102,9 @@ static int open_tile_write(const off_t tile_num) {
 
     // If this is a new file, make it of desired size
     if (file_is_new) {
-        rv = pwrite(fd, "\0", 1, mosaic.tile_size-1);
+        // Write image files at the beginning of the image file
+        rv = pwrite(fd, imageBytes, imageSize, 0);
+        rv = pwrite(fd, "\0", 1, mosaic.tile_size+imageSize-1);
         if (rv < 0) {
 	    fprintf(stderr, "ERROR writing to tile file %s\n",fpath);
 	    exit(-1);
@@ -165,7 +169,9 @@ int mosaicfs_getattr(const char *path, struct stat *stbuf)
 
 int mosaicfs_open(const char *path, struct fuse_file_info *fi)
 {
-    //fprintf(stderr,"--> mosaicfs_open: %s\n",path);
+#ifndef NDEBUG
+    fprintf(stderr,"--> mosaicfs_open: %s\n",path);
+#endif
     if (strcmp(path, "/") != 0)
         return -ENOENT;
 
@@ -174,7 +180,9 @@ int mosaicfs_open(const char *path, struct fuse_file_info *fi)
 
 int mosaicfs_release(const char * path, struct fuse_file_info * fi)
 {
-    //fprintf(stderr,"--> mosaicfs_release: %s\n",path);
+#ifndef NDEBUG
+    fprintf(stderr,"--> mosaicfs_release: %s\n",path);
+#endif
     if (strcmp(path, "/") != 0)
         return -ENOENT;
 
@@ -187,8 +195,10 @@ int mosaicfs_read(const char *path, char *buf, size_t size, off_t offset,
     int fd;
     off_t tile_num, tile_offset;
     size_t bufpos, r;
-
-    //fprintf(stderr,"--> mosaicfs_read: begin\n");
+    
+#ifndef NDEBUG
+    fprintf(stderr,"--> mosaicfs_read: begin\n");
+#endif
     if (strcmp(path, "/") != 0)
         return -ENOENT;
 
@@ -199,7 +209,7 @@ int mosaicfs_read(const char *path, char *buf, size_t size, off_t offset,
         lock();
         fd = get_tile_read(tile_num);
         if ( fd  > 0 ) {
-            r = pread(fd,buf+bufpos,size-bufpos,tile_offset);
+            r = pread(fd,buf+bufpos,size-bufpos,tile_offset+imageSize);
             bufpos += r;
         } else {
             r = min(size-bufpos,mosaic.tile_size-tile_offset);
@@ -219,7 +229,9 @@ int mosaicfs_write(const char *path, const char *buf, size_t size, off_t offset,
     off_t tile_num, tile_offset;
     size_t bufpos, r, rv;
 
-    //fprintf(stderr,"--> mosaicfs_write: %s\n",path);
+#ifndef NDEBUG
+    fprintf(stderr,"--> mosaicfs_write: %s\n",path);
+#endif
     if (strcmp(path, "/") != 0)
         return -ENOENT;
 
@@ -230,7 +242,7 @@ int mosaicfs_write(const char *path, const char *buf, size_t size, off_t offset,
         lock();
         fd = get_tile_write(tile_num);
         r = min(size-bufpos, mosaic.tile_size-tile_offset);
-        rv = pwrite(fd,buf+bufpos,r,tile_offset);
+        rv = pwrite(fd,buf+bufpos,r,tile_offset+imageSize);
         unlock();
         if (rv < 0) {
             return -errno;

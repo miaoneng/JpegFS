@@ -1,5 +1,5 @@
 CC	 = gcc
-CFLAGS	 = -Wall $(PKGFLAGS)
+CFLAGS	 = -Wall -g -O0 $(PKGFLAGS)
 LDFLAGS	 = $(PKGFLAGS)
 PKGFLAGS = `pkg-config fuse --cflags --libs`
 
@@ -14,7 +14,10 @@ parse.o: parse.c parse.h global.h
 mosaicfs.o: mosaicfs.c mosaicfs.h global.h
 
 mosaicfs: $(objects)
-	$(CC) $(objects) $(LDFLAGS) -o mosaicfs
+	$(CC) $(objects) $(LDFLAGS) -o mosaicfs_d
+
+release: $(objects)
+	$(CC) -DNDEBUG $(objects) $(LDFLAGS) -o mosaicfs
 
 clean:
-	rm -f $(objects) mosaicfs
+	rm -f $(objects) mosaicfs mosaicfs_d

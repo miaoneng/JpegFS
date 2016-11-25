@@ -28,6 +28,7 @@
 #include "mosaicfs.h"
 #include "global.h"
 #include "parse.h"
+#include "image.h"
 
 // Mapping functions for FUSE
 static struct fuse_operations mosaicfs_oper = {
@@ -74,11 +75,11 @@ int mount_cmd(int argc, char **argv)
         fuse_argc = n;
     }
 
-    /*
+#ifndef NDEBUG    
     int i;
     for (i = 0; i < fuse_argc; ++i)
       printf ("fuse_argv[%d] = %s\n", i, fuse_argv[i]);
-    */
+#endif
  
     // Path of mosaicfs archive
     if (argv[optind+1][0] == '/') {
@@ -192,7 +193,7 @@ int main(int argc, char **argv)
 {
 
    int r;
-
+   
     // --- parse command line arguments ---
     parse(argc, argv);
 

@@ -15,6 +15,11 @@
 #define min(a,b) (((a)<(b))?(a):(b))
 #define max(a,b) (((a)>(b))?(a):(b))
 
+typedef struct tile {
+    char path[PATH_MAX];
+    off_t start;
+} tile;
+
 struct mosaic {
     char dir[PATH_MAX];
     int format;
@@ -24,6 +29,8 @@ struct mosaic {
     int *fd;
     int nfiles;
     int nfiles_max;
+    // TODO: Be able to load different images for different files
+    tile *jpegs;
 };
 
 static pthread_mutex_t the_lock;
