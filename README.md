@@ -1,6 +1,22 @@
-﻿# MosaicFS
+﻿# JpegFS based on MosaicFS
 Linux FUSE driver to create disk images consisting of collection of small individual files.
 
+
+## What is JpegFS?
+Just like the MosaicFS, however, all tiles are hidden inside a valid jpeg files.
+
+## Why?
+No reason. For hobby only
+
+## I want use my own photo
+In `image.h`, replace the BLOB with your own. You can easily generate this file using `bin2c` tools. Do not forget modify `imageSize` too.
+
+## Next step?
+Currently all tiles are using same images. Next step is to random select file from ImageNet database. There are 10+ millions of jpegs there.
+
+Another is to create a helper utility to reindex all tiles.
+
+# From MosaicFS
 ## What is MosaicFS?
 
 MosaicFS is a Linux FUSE driver to create and access disk images. Rather 
